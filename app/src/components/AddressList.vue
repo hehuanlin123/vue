@@ -65,26 +65,25 @@
                     <div class="addr-list-wrap">
                         <div class="addr-list">
                             <ul>
-                                <li  class="check">
+                                <li  v-bind:class="{'check':checkedIndex == index}" v-bind:key="item.addressId" v-for="(item,index) in addressFilter" @click="checkedIndex = index">
                                     <dl>
-                                        <dt>河畔一角</dt>
-                                        <dd class="address">北京市昌平区</dd>
-                                        <dd class="tel">17600000000</dd>
+                                        <dt>{{item.userName}}</dt>
+                                        <dd class="address">{{item.streetName}}</dd>
+                                        <dd class="tel">{{item.tel}}</dd>
                                     </dl>
                                     <div class="addr-opration addr-del">
                                         <!-- 删除地址 -->
-                                        <a href="javascript:;" class="addr-del-btn">
+                                        <a href="javascript:;" class="addr-del-btn"  @click="openDelCondirm(item)">
                                             <svg class="icon icon-del">
                                                 <use xlink:href="#icon-del"></use>
                                             </svg>
                                         </a>
                                     </div>
                                     <div class="addr-opration addr-set-default">
-                                        <a href="javascript:;" class="addr-set-default-btn"><i>设为默认</i></a>
+                                        <a href="javascript:;" class="addr-set-default-btn" @click="setDefault(item.addressId)"><i>设为默认</i></a>
                                     </div>
                                     <div class="addr-opration addr-default">默认地址</div>
                                 </li>
-
                                 <li class="addr-new">
                                     <div class="add-new-inner">
                                         <i class="icon-add">
@@ -99,7 +98,7 @@
                         </div>
 
                         <div class="shipping-addr-more">
-                            <a class="addr-more-btn up-down-btn open" href="javascript:;">
+                            <a class="addr-more-btn up-down-btn" href="javascript:;" @click="expand" v-bind:class="{'open':limit > 3}">
                                 查看更多
                                 <i class="i-up-down">
                                     <i class="i-up-down-l"></i>
@@ -136,21 +135,85 @@
 </template>
 
 <script>
+    import axios from 'axios';
+
     export default {
         name: "v-addresslist",
+        props:[],
         components: {
 
         },
         data(){
             return {
-
+                limit:3,
+                checkedIndex:0,
+                addressList:'',
+                delItem:''
             }
         },
         methods:{
-
+            //加载地址列表
+            loadlist(){
+                axios.get('/mock/address.json')
+                    .then((response) => {
+                        const result = response.data;
+                        if(result.code == '0'){
+                            this.addressList = result.data;
+                            //默认点亮的地址
+                            result.data.forEach((item,index) => {
+                                if(item.isDefault){
+                                    this.checkedIndex = index;
+                                }
+                            })
+                        }
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                    })
+            },
+            //查看更多、更少
+            expand(){
+                if (this.limit == 3){
+                    this.limit = this.addressList.length
+                } else {
+                    this.limit = 3;
+                }
+            },
+            //设置默认地址
+            setDefault(addressId){
+                this.addressList.map((item) => {
+                    if(addressId == item.addressId) {
+                        item.isDefault = true;
+                    } else {
+                        item.isDefault = false;
+                    }
+                })
+            },
+            //删除地址
+            delAddresss(addressId){
+                this.addressList.map((item,index) => {
+                    if(addressId == item.addressId) {
+                        this.addressList.splice(index,1);
+                    }
+                })
+            },
+            openDelCondirm(item){
+                this.delItem = item;
+                this.$emit('open',item.id);
+            },
+            delConfirm(item){
+                const addressId = item.addressId;
+                this.delAddresss(addressId);
+            },
         },
         mounted() {
-
+            this.loadlist();
+        },
+        computed:{
+            //限制渲染三条
+            addressFilter(){
+                return this.addressList.slice(0,this.limit);
+            },
         }
     }
 </script>
