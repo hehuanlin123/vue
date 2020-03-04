@@ -49,7 +49,7 @@ export default {
     },
     confirm(){
       this.closeModal();
-      this.$refs.addresslists.delConfirm(this.deleteItem)
+      this.$refs.addresslist.delConfirm(this.deleteItem)
     },
     close(){
       this.closeModal();
